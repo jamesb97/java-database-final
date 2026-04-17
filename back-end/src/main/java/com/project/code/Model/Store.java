@@ -28,7 +28,7 @@ public class Store {
 
     @OneToMany(mappedBy = "store", fetch = FetchType.EAGER)
     @JsonManagedReference("inventory-store")
-    private List inventory;
+    private List<Inventory> inventory;
 
     // Getters and Setters
 
@@ -56,11 +56,11 @@ public class Store {
         this.address = address;
     }
 
-    public List getInventory() {
+    public List<Inventory> getInventory() {
         return inventory;
     }
 
-    public void setInventory(List inventory) {
+    public void setInventory(List<Inventory> inventory) {
         this.inventory = inventory;
     }
 
