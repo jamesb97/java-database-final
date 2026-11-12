@@ -8,8 +8,11 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
 
 @Entity
+@Table(indexes = @Index(name = "idx_inventory_store_product", columnList = "store_id, product_id"))
 public class Inventory {
    @Id
    @GeneratedValue(strategy = GenerationType.IDENTITY)

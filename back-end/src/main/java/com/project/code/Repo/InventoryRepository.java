@@ -1,7 +1,9 @@
 package com.project.code.Repo;
 
+import java.util.Collection;
 import java.util.List;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -16,6 +18,9 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
 
     @Query("SELECT i FROM Inventory i WHERE i.product.id = :productId AND i.store.id = :storeId")
     Inventory findByProductIdandStoreId(Long productId, Long storeId);
+
+    @EntityGraph(attributePaths = "product")
+    List<Inventory> findByStore_IdAndProduct_IdIn(Long storeId, Collection<Long> productIds);
 
     List<Inventory> findByStore_Id(Long storeId);
 
