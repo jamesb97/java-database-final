@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,6 +33,13 @@ public class ReviewController {
     public Map<String, Object> getReviews(@PathVariable long storeId, @PathVariable long productId) {
         Map<String, Object> map = new HashMap<>();
         List<Review> reviews = reviewRepository.findByStoreIdAndProductId(storeId, productId);
+        Set<Long> customerIds = reviews.stream()
+                .map(Review::getCustomerId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        Map<Long, Customer> customersById = new HashMap<>();
+        customerRepository.findAllById(customerIds)
+                .forEach(customer -> customersById.put(customer.getId(), customer));
 
         List<Map<String, Object>> reviewsWithCustomerNames = new ArrayList<>();
 
@@ -38,7 +48,7 @@ public class ReviewController {
             reviewMap.put("review", review.getComment());
             reviewMap.put("rating", review.getRating());
 
-            Customer customer = customerRepository.findByid(review.getCustomerId());
+            Customer customer = customersById.get(review.getCustomerId());
             if (customer != null) {
                 reviewMap.put("customerName", customer.getName());
             } else {

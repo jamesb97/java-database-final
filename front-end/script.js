@@ -2,6 +2,10 @@ const apiURL = '';
 let students = [];
 let Ordercount = 1;
 let deleteRow = [];
+const productSearchTimers = new Map();
+const productSearchControllers = new Map();
+let parentProductSearchTimer;
+let parentProductSearchController;
 
 function resetForm() {
     const inputs = document.querySelectorAll("#myform input:not([type='submit']), #myform select");
@@ -76,6 +80,10 @@ function deleteDiv(count) {
 
     // Check if the div exists
     if (divToDelete && Ordercount != 1) {
+        clearTimeout(productSearchTimers.get(count));
+        productSearchTimers.delete(count);
+        productSearchControllers.get(count)?.abort();
+        productSearchControllers.delete(count);
         divToDelete.remove();
         deleteRow.push(count);
     }
@@ -116,31 +124,34 @@ function setSerialNo() {
 
 
 function fillProductId(count) {
-    let storeId = document.getElementById('orderStoreId').value;
-    suggestion = document.getElementById(`OrderSuggestion${count}`);
-    productId = document.getElementById(`orderProductName${count}`).value
-    if (productId.trim() !== '') {
-        let url = `${apiURL}/inventory/search/${productId}/${storeId}`;
+    const storeId = document.getElementById('orderStoreId').value;
+    const suggestion = document.getElementById(`OrderSuggestion${count}`);
+    const productName = document.getElementById(`orderProductName${count}`).value.trim();
+    clearTimeout(productSearchTimers.get(count));
+    productSearchControllers.get(count)?.abort();
+
+    if (!productName) {
+        suggestion.innerHTML = "";
+        return;
+    }
+
+    productSearchTimers.set(count, setTimeout(() => {
+        const controller = new AbortController();
+        productSearchControllers.set(count, controller);
+        const url = `${apiURL}/inventory/search/${encodeURIComponent(productName)}/${storeId}`;
         fetch(url, {
             method: "GET",
             headers: { "content-type": "application/json" },
+            signal: controller.signal,
         })
-            .then(response => {
-                return response.json();
-            })
-            .then(data => {
-    
-               showOrderSuggestion(data.product, count);
-            })
+            .then(response => response.json())
+            .then(data => showOrderSuggestion(data.product, count))
             .catch(error => {
-                alert(error);
-            })
-    }
-    else {
-        suggestion.innerHTML = "";
-    }
-
-
+                if (error.name !== 'AbortError') {
+                    alert(error);
+                }
+            });
+    }, 250));
 }
 
 
@@ -325,6 +336,7 @@ function filter() {
 async function createData(products, storeId) {
     const tableBody = document.getElementById('tableBody');
     tableBody.innerHTML = '';
+    const rows = document.createDocumentFragment();
     products.forEach(product => {
 
         const row = document.createElement('tr');
@@ -396,8 +408,9 @@ async function createData(products, storeId) {
         row.appendChild(buttoncolumn);
         row.appendChild(buttonTable2);
 
-        tableBody.appendChild(row);
+        rows.appendChild(row);
     });
+    tableBody.appendChild(rows);
 }
 
 
@@ -481,28 +494,33 @@ function updateProduct(event) {
 
 
 function fillProductName() {
-    let productName = document.getElementById('productName').value;
-    if (productName.trim() != "") {
-        let url = `${apiURL}/product/searchProduct/${productName}`;
+    const productName = document.getElementById('productName').value.trim();
+    const suggestion = document.getElementById('aStoreSuggestion');
+    clearTimeout(parentProductSearchTimer);
+    parentProductSearchController?.abort();
+
+    if (!productName) {
+        suggestion.innerHTML = "";
+        return;
+    }
+
+    parentProductSearchTimer = setTimeout(() => {
+        const controller = new AbortController();
+        parentProductSearchController = controller;
+        const url = `${apiURL}/product/searchProduct/${encodeURIComponent(productName)}`;
         fetch(url, {
             method: "GET",
             headers: { "content-type": "application/json" },
+            signal: controller.signal,
         })
-            .then(response => {
-                return response.json();
-            })
-            .then(data => {
-               showproductSuggestion(data.products);
-            })
+            .then(response => response.json())
+            .then(data => showproductSuggestion(data.products))
             .catch(error => {
-                alert(error);
-            })
-    }
-    else {
-        suggestion = document.getElementById('aStoreSuggestion');
-        suggestion.innerHTML = "";
-
-    }
+                if (error.name !== 'AbortError') {
+                    alert(error);
+                }
+            });
+    }, 250);
 }
 
 
