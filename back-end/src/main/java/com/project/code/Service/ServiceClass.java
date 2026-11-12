@@ -36,12 +36,7 @@ public class ServiceClass {
     }
 
     public boolean ValidateProductId(long id) {
-        Product result = productRepository.findByid(id);
-        System.out.println(result);
-        if (result == null) {
-            return false;
-        }
-        return true;
+        return productRepository.existsById(id);
     }
 
     public Inventory getInventoryId(Inventory inventory) {

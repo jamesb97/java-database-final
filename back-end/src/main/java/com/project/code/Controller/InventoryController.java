@@ -126,7 +126,7 @@ public class InventoryController {
     @GetMapping("search/{name}/{storeId}")
     public Map<String, Object> searchProduct(@PathVariable String name, @PathVariable long storeId) {
         Map<String, Object> map = new HashMap<>();
-        map.put("product", productRepository.findByNameLike(storeId, name));
+        map.put("product", productRepository.findProductSuggestionsByName(storeId, name));
         return map;
     }
 
